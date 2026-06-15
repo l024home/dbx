@@ -1585,6 +1585,34 @@ mod tests {
     }
 
     #[test]
+    fn prepares_databend_save_statements() {
+        let result = prepare_data_grid_save(DataGridSaveStatementOptions {
+            database_type: Some(DatabaseType::Databend),
+            table_meta: DataGridTableMeta {
+                schema: Some("default".to_string()),
+                table_name: "people".to_string(),
+                primary_keys: vec!["id".to_string()],
+                columns: Some(vec![column("id", "int", false, None), column("name", "string", true, None)]),
+            },
+            columns: vec!["id".to_string(), "name".to_string()],
+            source_columns: None,
+            rows: vec![vec![json!(1), json!("Ada")]],
+            dirty_rows: vec![(0, vec![(1, json!("Linus"))])],
+            deleted_rows: vec![0],
+            new_rows: vec![vec![json!(2), json!("Grace")]],
+        });
+
+        assert_eq!(
+            result.statements,
+            vec![
+                "UPDATE `default`.`people` SET `name` = 'Linus' WHERE `id` = 1;",
+                "DELETE FROM `default`.`people` WHERE `id` = 1;",
+                "INSERT INTO `default`.`people` (`id`, `name`) VALUES (2, 'Grace');",
+            ]
+        );
+    }
+
+    #[test]
     fn skips_expression_only_source_columns() {
         let result = prepare_data_grid_save(DataGridSaveStatementOptions {
             database_type: Some(DatabaseType::Postgres),

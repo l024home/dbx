@@ -359,7 +359,7 @@ impl AppState {
                 .await?;
                 PoolKind::Mysql(pool, mode)
             }
-            DatabaseType::Doris | DatabaseType::StarRocks | DatabaseType::ManticoreSearch | DatabaseType::Databend => {
+            DatabaseType::Doris | DatabaseType::StarRocks | DatabaseType::ManticoreSearch => {
                 let pool = if database.is_none() {
                     connect_bare_metadata_pool(&db_config, &host, port, connect_timeout, mysql_pool_max_connections)
                         .await?
@@ -538,6 +538,7 @@ impl AppState {
             | DatabaseType::Highgo
             | DatabaseType::Vastbase
             | DatabaseType::Goldendb
+            | DatabaseType::Databend
             | DatabaseType::Yashandb
             | DatabaseType::Databricks
             | DatabaseType::SapHana
@@ -1131,6 +1132,11 @@ fn shares_database_pool_with_connection(db_type: &DatabaseType) -> bool {
     matches!(db_type, DatabaseType::Oracle)
 }
 
+#[cfg(test)]
+fn uses_bare_mysql_pool(db_type: &DatabaseType) -> bool {
+    matches!(db_type, DatabaseType::Doris | DatabaseType::StarRocks | DatabaseType::ManticoreSearch)
+}
+
 fn default_plugin_dir() -> PathBuf {
     default_dbx_dir().join("plugins")
 }
@@ -1308,14 +1314,15 @@ async fn detect_ob_oracle_mode(config: &ConnectionConfig, pool: &db::mysql::MySq
 mod tests {
     use super::{
         connection_url_for_endpoint, database_connection_config, metadata_connection_config,
-        mysql_metadata_fallback_url, redacted_connection_url_for_endpoint, uses_tcp_probe, validate_h2_database_path,
-        AppState, PoolKind,
+        mysql_metadata_fallback_url, redacted_connection_url_for_endpoint, uses_bare_mysql_pool, uses_tcp_probe,
+        validate_h2_database_path, AppState, PoolKind,
     };
     use crate::agent_connection::{
         agent_connect_params, mongo_legacy_error_with_auth_hint, mongo_uses_legacy_driver,
         oracle_alternate_connect_config, should_retry_mongo_with_legacy_driver, should_retry_oracle_with_10g_driver,
     };
     use crate::agent_manager::{AgentState, JavaRuntimeConfig, JavaRuntimeMode, DEFAULT_JRE_KEY};
+    use crate::database_capabilities;
     use crate::db;
     use crate::models::connection::{
         default_connect_timeout_secs, default_redis_key_separator, ConnectionConfig, DatabaseType, ProxyTunnelConfig,
@@ -1385,6 +1392,15 @@ mod tests {
         assert_eq!(params["username"], "informix");
         assert_eq!(params["password"], "in4mix");
         assert_eq!(params["url_params"], "INFORMIXSERVER=informix;CLIENT_LOCALE=en_US.utf8");
+    }
+
+    #[test]
+    fn databend_uses_agent_pool_not_bare_mysql_pool() {
+        assert!(uses_bare_mysql_pool(&DatabaseType::Doris));
+        assert!(uses_bare_mysql_pool(&DatabaseType::StarRocks));
+        assert!(uses_bare_mysql_pool(&DatabaseType::ManticoreSearch));
+        assert!(!uses_bare_mysql_pool(&DatabaseType::Databend));
+        assert!(database_capabilities::is_agent_type(&DatabaseType::Databend));
     }
 
     #[test]
