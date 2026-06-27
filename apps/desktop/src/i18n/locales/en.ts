@@ -1659,6 +1659,7 @@ export default {
   redis: {
     selectKey: "Select a key to view its value",
     noKeys: "No keys found",
+    noKeysInScanHint: "No keys found in current scan range",
     pattern: "pattern (e.g. user:*)",
     fuzzyPattern: "key contains...",
     fuzzyMatch: "Fuzzy",
@@ -1669,6 +1670,7 @@ export default {
     searchByValue: "Value",
     searchByAll: "All",
     keys: "{count} keys",
+    loadedKeys: "{loaded} / {total} keys loaded",
     loadingKeys: "Loading keys...",
     searchingValues: "Searching values...",
     searchingAll: "Searching keys and values...",

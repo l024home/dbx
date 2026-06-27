@@ -1658,6 +1658,7 @@ export default {
   redis: {
     selectKey: "选择一个 key 查看值",
     noKeys: "未找到 key",
+    noKeysInScanHint: "当前扫描范围内未命中匹配的 key",
     pattern: "匹配模式 (如 user:*)",
     fuzzyPattern: "输入关键字搜索 key",
     fuzzyMatch: "模糊",
@@ -1668,6 +1669,7 @@ export default {
     searchByValue: "值",
     searchByAll: "全部",
     keys: "{count} 个 key",
+    loadedKeys: "已加载 {loaded} / 共 {total} 个 key",
     loadingKeys: "正在加载 key...",
     searchingValues: "正在按值搜索...",
     searchingAll: "正在搜索 key 和值...",
